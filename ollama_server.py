@@ -15,13 +15,14 @@ gemma3:1b : Reduces size gemma3 model for improved speed.
 
 context_file = "./context.txt"
 
-def save_context_to_file(data_list, filename):
+def save_context_to_file(data_list, filename, silent=False):
     """Writes a list of dictionaries to a text file in JSON format."""
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             # indent=4 makes the text file human-readable
             json.dump(data_list, f, indent=4)
-        print(f"Successfully saved to {filename}")
+        if not silent:
+            print(f"Successfully saved context to {filename}")
     except Exception as e:
         print(f"Error saving file: {e}")
 
