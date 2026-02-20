@@ -3,6 +3,18 @@ import json
 import ollama
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+"""
+~~~ Ollama model recommendations ~~~
+NOTE: Models must be pulled outside this script using
+ollama pull <model_name>
+
+tinyllama : Very fast but minimally helpful AI assistant.
+gemma3 : Standard AI assistant, modest size.
+gemma3:1b : Reduces size gemma3 model for improved speed.
+"""
+
+context_file = "./context.txt"
+
 def save_context_to_file(data_list, filename):
     """Writes a list of dictionaries to a text file in JSON format."""
     try:
@@ -26,13 +38,13 @@ def load_context_from_file(filename):
         print(f"Error loading file: {e}")
         return []
     
-def ollama_chat(client_message, model_name="tinyllama"):
+def ollama_chat(client_message, model_name="gemma3:1b"):
     """
     Call and response version of Ollama with preserved context.
     Note that context will be preserved after client disconnect
     as long as this server script continues running.
     
-    :param client_message: global messages as init in main().
+    :param client_message: Message to generate response to.
     :param model_name: LLM model for Ollama to use.
     """
     global messages
@@ -62,7 +74,7 @@ class MessageHandler(BaseHTTPRequestHandler):
         self.wfile.write(result.encode('utf-8'))
         print(f"[SENT BACK]:\n{result}")
 
-def loop(server_class=HTTPServer, handler_class=MessageHandler, port=8000):
+def loop(server_class=HTTPServer, handler_class=MessageHandler, port: int=8000, context_fname=None):
     server_address = ('0.0.0.0', port)
     httpd = server_class(server_address, handler_class)
     print(f"Server listening on port {port}...")
@@ -71,14 +83,14 @@ def loop(server_class=HTTPServer, handler_class=MessageHandler, port=8000):
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nClosing HTTP server!\n")
-        save_context_to_file(messages, context_file)
+        if context_file is not None:
+            save_context_to_file(messages, context_fname)
         httpd.server_close()
 
 
 if __name__ == "__main__":
-    
-    context_file = "./context.txt"
 
+    # 'messages' and 'context_file' are in global namespace
     if os.path.exists(context_file):
         print(f"Found context file at {context_file}. Loading.")
         messages = load_context_from_file(context_file)
@@ -91,4 +103,4 @@ if __name__ == "__main__":
 
     print(messages)
 
-    loop()
+    loop(context_fname=context_file)
