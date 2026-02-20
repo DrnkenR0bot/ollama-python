@@ -1,7 +1,9 @@
 import os
+import sys
 import json
 import ollama
 
+model = "gemma3:1b"
 haiku_prompt="Pick a random noun and write a haiku with that as the topic. Return only the poem."
 context_file = "./haiku_context.txt"
 
@@ -48,14 +50,22 @@ def ollama_chat(prompt: str, model_name: str="gemma3:1b"):
 
 if __name__ == "__main__":
 
-    # Check for haiku context file
+    # Pull model.
+    try:
+        ollama.pull(model)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    # Check for haiku context file.
     if os.path.exists(context_file):
         messages = load_context_from_file(context_file)
     else:
+        # Start new context file.
         messages = [\
             {"role": "system", "content": "You are a haiku poet. Make all responses brief."},
         ]
-    response = ollama_chat(haiku_prompt)
+    response = ollama_chat(haiku_prompt, model_name=model)
     print("Model Response:")
     print(response)
     save_context_to_file(messages, context_file, silent=True)
