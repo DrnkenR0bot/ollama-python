@@ -14,6 +14,7 @@ gemma3:1b : Reduces size gemma3 model for improved speed.
 """
 
 context_file = "./context.txt"
+session_model_name = "gemma3:1b"
 
 def save_context_to_file(data_list, filename, silent=False):
     """Writes a list of dictionaries to a text file in JSON format."""
@@ -38,8 +39,8 @@ def load_context_from_file(filename):
     except Exception as e:
         print(f"Error loading file: {e}")
         return []
-    
-def ollama_chat(client_message, model_name="gemma3:1b"):
+
+def ollama_chat(client_message, model_name=session_model_name):
     """
     Call and response version of Ollama with preserved context.
     Note that context will be preserved after client disconnect
@@ -88,10 +89,33 @@ def loop(server_class=HTTPServer, handler_class=MessageHandler, port: int=8000, 
             save_context_to_file(messages, context_fname)
         httpd.server_close()
 
+def model_is_installed(model_name: str):
+    # Get the list of local models
+    local_models = ollama.list()
+    
+    # Extract the names from the model list
+    # Note: Ollama often appends ':latest' if no tag is specified
+    installed_models = [m['model'] for m in local_models['models']]
+    
+    if model_name in installed_models:
+        return True
+    
+    # Check for the ':latest' suffix if the user didn't provide one
+    if ':' not in model_name:
+        return f"{model_name}:latest" in installed_models
+        
+    return False
 
 if __name__ == "__main__":
 
     # 'messages' and 'context_file' are in global namespace
+
+    # Check for desired model
+    if not model_is_installed(session_model_name):
+        print(f"Pulling {session_model_name} from repository...")
+        ollama.pull(session_model_name)
+        print("Done pulling.")
+
     if os.path.exists(context_file):
         print(f"Found context file at {context_file}. Loading.")
         messages = load_context_from_file(context_file)
