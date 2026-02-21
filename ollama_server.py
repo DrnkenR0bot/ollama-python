@@ -72,7 +72,7 @@ class MessageHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
         
-        # Write the returned string from my_function back to the client
+        # Write the returned string back to the client
         self.wfile.write(result.encode('utf-8'))
         print(f"[SENT BACK]:\n{result}")
 
